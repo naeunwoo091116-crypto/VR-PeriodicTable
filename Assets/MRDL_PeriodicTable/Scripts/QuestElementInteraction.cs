@@ -9,6 +9,9 @@ namespace HoloToolkit.MRDL.PeriodicTable
     [RequireComponent(typeof(XRSimpleInteractable))]
     public class QuestElementInteraction : MonoBehaviour
     {
+        [Tooltip("닫기(X) 버튼으로 사용할 경우 체크. selectEntered 시 ResetActiveElement를 호출합니다.")]
+        public bool isCloseButton = false;
+
         private XRSimpleInteractable interactable;
         private Element element;
 
@@ -16,6 +19,9 @@ namespace HoloToolkit.MRDL.PeriodicTable
         {
             interactable = GetComponent<XRSimpleInteractable>();
             element = GetComponent<Element>();
+            // 닫기 버튼은 Element 컴포넌트가 없으므로 부모 계층에서 탐색
+            if (element == null)
+                element = GetComponentInParent<Element>();
         }
 
         void OnEnable()
@@ -23,8 +29,11 @@ namespace HoloToolkit.MRDL.PeriodicTable
             if (interactable == null) return;
             interactable.selectEntered.AddListener(OnSelectEntered);
             interactable.activated.AddListener(OnActivated);
-            interactable.hoverEntered.AddListener(OnHoverEntered);
-            interactable.hoverExited.AddListener(OnHoverExited);
+            if (!isCloseButton)
+            {
+                interactable.hoverEntered.AddListener(OnHoverEntered);
+                interactable.hoverExited.AddListener(OnHoverExited);
+            }
         }
 
         void OnDisable()
@@ -32,22 +41,35 @@ namespace HoloToolkit.MRDL.PeriodicTable
             if (interactable == null) return;
             interactable.selectEntered.RemoveListener(OnSelectEntered);
             interactable.activated.RemoveListener(OnActivated);
-            interactable.hoverEntered.RemoveListener(OnHoverEntered);
-            interactable.hoverExited.RemoveListener(OnHoverExited);
+            if (!isCloseButton)
+            {
+                interactable.hoverEntered.RemoveListener(OnHoverEntered);
+                interactable.hoverExited.RemoveListener(OnHoverExited);
+            }
         }
 
         private void OnSelectEntered(SelectEnterEventArgs args)
         {
             if (element == null) return;
-            element.SetActiveElement();
-            element.Open();
+            if (isCloseButton)
+                element.ResetActiveElement();
+            else
+            {
+                element.SetActiveElement();
+                element.Open();
+            }
         }
 
         private void OnActivated(ActivateEventArgs args)
         {
             if (element == null) return;
-            element.SetActiveElement();
-            element.Open();
+            if (isCloseButton)
+                element.ResetActiveElement();
+            else
+            {
+                element.SetActiveElement();
+                element.Open();
+            }
         }
 
         private void OnHoverEntered(HoverEnterEventArgs args)
