@@ -315,7 +315,9 @@ Shader "Mixed Reality Toolkit/Standard"
                 fixed3 worldNormal : COLOR3;
 #endif
 #endif
+#if !defined(STEREO_INSTANCING_ON)
                 UNITY_VERTEX_INPUT_INSTANCE_ID
+#endif
             };
 
             UNITY_INSTANCING_BUFFER_START(Props)
@@ -575,7 +577,9 @@ Shader "Mixed Reality Toolkit/Standard"
                 UNITY_SETUP_INSTANCE_ID(v);
                 UNITY_INITIALIZE_OUTPUT(v2f, o);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
+#if !defined(STEREO_INSTANCING_ON)
                 UNITY_TRANSFER_INSTANCE_ID(v, o);
+#endif
 
                 float4 vertexPosition = v.vertex;
 
@@ -757,7 +761,9 @@ Shader "Mixed Reality Toolkit/Standard"
 
             fixed4 frag(v2f i, bool rawFacing : SV_IsFrontFace) : SV_Target
             {
+#if !defined(STEREO_INSTANCING_ON)
                 UNITY_SETUP_INSTANCE_ID(i);
+#endif
                 fixed facing = rawFacing ? 1.0 : -1.0;
 
 #if defined(_TRIPLANAR_MAPPING)
