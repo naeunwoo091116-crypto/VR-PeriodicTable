@@ -1,5 +1,6 @@
 // OVR 컨트롤러용 주기율표 인터랙터
 // 원소 클릭과 완전히 동일한 방식으로 레이아웃 버튼 / X버튼도 처리
+// 원자 그랩: 레이가 Layer 9(Atoms)에 히트한 상태에서 트리거를 누르면 원자를 이동
 using UnityEngine;
 
 namespace HoloToolkit.MRDL.PeriodicTable
@@ -16,10 +17,16 @@ namespace HoloToolkit.MRDL.PeriodicTable
         [Header("레이 색상")]
         public Color rayColorNormal = new Color(0f, 0.8f, 1f, 0.8f);
         public Color rayColorHover  = new Color(1f, 1f, 0f, 1f);
+        public Color rayColorGrab   = new Color(0f, 1f, 0.3f, 1f);
 
         private LineRenderer line;
         private Element  hoveredElement;
         private VRButton hoveredButton;
+
+        // 원자 그랩 상태
+        private bool      isGrabbing          = false;
+        private Transform grabbedAtomTransform = null;
+        private float     grabDistance         = 0f;
 
         void Awake()
         {
@@ -44,8 +51,6 @@ namespace HoloToolkit.MRDL.PeriodicTable
         }
 
         // ── 레이아웃 버튼 설정 ────────────────────────────────────────
-        // 원소가 Element 컴포넌트 + BoxCollider를 갖는 것처럼
-        // 버튼도 VRButton 컴포넌트 + BoxCollider를 갖도록 설정
         void SetupLayoutButtons()
         {
             var lsc = FindFirstObjectByType<LayoutStyleChanger>();
@@ -64,14 +69,12 @@ namespace HoloToolkit.MRDL.PeriodicTable
                 if (t.gameObject.name != goName) continue;
                 var go = t.gameObject;
 
-                // 원소처럼 Collider 확보
                 if (go.GetComponent<Collider>() == null)
                 {
                     var bc  = go.AddComponent<BoxCollider>();
                     bc.size = new Vector3(0.032f, 0.032f, 0.012f);
                 }
 
-                // 원소처럼 클릭 컴포넌트 부착
                 var btn = go.GetComponent<VRButton>() ?? go.AddComponent<VRButton>();
                 btn.onClick.RemoveAllListeners();
                 btn.onClick.AddListener(() => action());
@@ -86,44 +89,87 @@ namespace HoloToolkit.MRDL.PeriodicTable
             RaycastHit hit;
             Element  hitElem   = null;
             VRButton hitButton = null;
+            bool     hitAtom   = false;
             Vector3  endPoint  = transform.position + transform.forward * maxRayDistance;
 
             if (Physics.Raycast(ray, out hit, maxRayDistance, raycastMask))
             {
-                endPoint  = hit.point;
-                // Layer 9(Atoms)는 원자 그랩 전용 — 원소 선택/닫기 대상에서 제외
-                if (hit.collider.gameObject.layer != 9)
+                endPoint = hit.point;
+                if (hit.collider.gameObject.layer == 9)
                 {
-                    hitElem   = hit.collider.GetComponentInParent<Element>();
+                    // Layer 9 = Atoms: 그랩 전용, 원소 선택/닫기 대상에서 제외
+                    hitAtom = true;
+                }
+                else
+                {
+                    hitElem = hit.collider.GetComponentInParent<Element>();
                     if (hitElem == null)
                         hitButton = hit.collider.GetComponentInParent<VRButton>();
                 }
             }
 
+            // ── 원소 닫힘 시 그랩 자동 해제 ──────────────────────────
+            if (isGrabbing && Element.ActiveElement == null)
+            {
+                isGrabbing          = false;
+                grabbedAtomTransform = null;
+            }
+
+            // ── 그랩 중 Atom 이동 ─────────────────────────────────────
+            if (isGrabbing && grabbedAtomTransform != null)
+            {
+                grabbedAtomTransform.position =
+                    transform.position + transform.forward * grabDistance;
+            }
+
+            // ── 트리거 놓음 → 그랩 해제 ──────────────────────────────
+            if (isGrabbing && OVRInput.GetUp(OVRInput.Button.PrimaryIndexTrigger, controller))
+            {
+                isGrabbing          = false;
+                grabbedAtomTransform = null;
+            }
+
+            // ── 레이 시각화 ──────────────────────────────────────────
             line.SetPosition(0, transform.position);
-            line.SetPosition(1, endPoint);
+            line.SetPosition(1, isGrabbing ? transform.position + transform.forward * grabDistance : endPoint);
 
-            // 호버 처리
-            if (hitElem != hoveredElement)
+            // ── 호버 처리 ─────────────────────────────────────────────
+            if (!isGrabbing)
             {
-                hoveredElement?.Dim();
-                hoveredElement = hitElem;
-                hoveredElement?.Highlight();
+                if (hitElem != hoveredElement)
+                {
+                    hoveredElement?.Dim();
+                    hoveredElement = hitElem;
+                    hoveredElement?.Highlight();
+                }
+                if (hitButton != hoveredButton)
+                {
+                    hoveredButton?.OnHoverExit();
+                    hoveredButton = hitButton;
+                    hoveredButton?.OnHoverEnter();
+                }
             }
-            if (hitButton != hoveredButton)
-            {
-                hoveredButton?.OnHoverExit();
-                hoveredButton = hitButton;
-                hoveredButton?.OnHoverEnter();
-            }
-            SetLineColor((hoveredElement != null || hoveredButton != null) ? rayColorHover : rayColorNormal);
 
-            // 트리거 — 원소와 완전히 동일한 OVRInput.GetDown 방식
+            if (isGrabbing)
+                SetLineColor(rayColorGrab);
+            else if (hoveredElement != null || hoveredButton != null || hitAtom)
+                SetLineColor(rayColorHover);
+            else
+                SetLineColor(rayColorNormal);
+
+            // ── 트리거 누름 ───────────────────────────────────────────
             if (OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger, controller))
             {
-                if (hoveredElement != null)
+                if (hitAtom && Element.ActiveElement != null)
                 {
-                    // 이미 열린 원소 → 닫기 (X버튼 역할)
+                    // Atom 그랩 시작
+                    isGrabbing           = true;
+                    grabbedAtomTransform = hit.collider.transform;
+                    grabDistance         = hit.distance;
+                }
+                else if (hoveredElement != null)
+                {
+                    // 이미 열린 원소 → 닫기, 아니면 열기
                     if (Element.ActiveElement == hoveredElement)
                         hoveredElement.ResetActiveElement();
                     else
@@ -134,7 +180,6 @@ namespace HoloToolkit.MRDL.PeriodicTable
                 }
                 else if (hoveredButton != null)
                 {
-                    // 레이아웃 버튼 — 원소 Open()과 동일한 흐름
                     hoveredButton.OnSelect();
                 }
             }
@@ -142,8 +187,10 @@ namespace HoloToolkit.MRDL.PeriodicTable
 
         void OnDisable()
         {
-            hoveredElement?.Dim();   hoveredElement = null;
-            hoveredButton?.OnHoverExit(); hoveredButton = null;
+            hoveredElement?.Dim();        hoveredElement       = null;
+            hoveredButton?.OnHoverExit(); hoveredButton        = null;
+            isGrabbing          = false;
+            grabbedAtomTransform = null;
             if (line != null) line.enabled = false;
         }
 
