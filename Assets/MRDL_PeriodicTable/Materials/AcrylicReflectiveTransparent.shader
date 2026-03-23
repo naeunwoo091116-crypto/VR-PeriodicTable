@@ -1,4 +1,4 @@
-﻿Shader "HUX/Acrylic Reflective (Transparent)"
+Shader "HUX/Acrylic Reflective (Transparent)"
 {
 		Properties
 		{
@@ -20,9 +20,8 @@
 			LOD 300
 
 				CGPROGRAM
-				#pragma target 5.0
-				#pragma only_renderers d3d11
-				#pragma surface surf BlinnPhong vertex:vert alpha
+				#pragma target 3.0
+				#pragma surface surf BlinnPhong alpha
 
 				fixed3 _Color;
 				sampler2D _MainTex;
@@ -33,19 +32,10 @@
 				float4 _NearPlaneFadeDistance;
 				float _Opacity;
 
-				inline float ComputeNearPlaneFadeLinear(float4 vertex)
-				{
-					float distToCamera = -(mul(UNITY_MATRIX_MV, vertex).z);
-					return saturate(mad(distToCamera, _NearPlaneFadeDistance.y, _NearPlaneFadeDistance.x));
-				}
-
 				struct Input {
 					half2 uv_MainTex;
-					half2 uv_ReflTex;
-					half4 screenPos;
 					half3 viewDir;
 					float3 worldRefl;
-					float fade;
 				};
 
 				void surf(Input IN, inout SurfaceOutput o) {
@@ -59,12 +49,6 @@
 				 	o.Albedo 	= tex.b * _Color;
 					o.Emission = refl + (rim * _Color) + (em * _Color);
 					o.Alpha = _Opacity * tex.a;
-				}
-
-				void vert(inout appdata_full v, out Input o)
-				{
-					UNITY_INITIALIZE_OUTPUT(Input, o);
-					o.fade = ComputeNearPlaneFadeLinear(v.vertex);
 				}
 				ENDCG
 		}
