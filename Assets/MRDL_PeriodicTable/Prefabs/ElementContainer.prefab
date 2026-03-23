@@ -2084,10 +2084,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Radius: 0.1
-  NucleusFlowSpeed: 5
-  NucleusJitter: 0.05
-  NucleusHoldShape: 0.5
-  NucleusChangeSpeedOdds: 0.25
+  NucleusFlowSpeed: 2
+  NucleusJitter: 0.02
+  NucleusHoldShape: 0.95
+  NucleusChangeSpeedOdds: 0.005
   ScaleTransform: {fileID: 0}
   Collapse: 0
   NumProtons: 0

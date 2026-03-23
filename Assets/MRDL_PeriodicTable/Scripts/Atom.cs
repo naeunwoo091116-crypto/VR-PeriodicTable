@@ -10,13 +10,13 @@ public class Atom : MonoBehaviour
 
     public float Radius = 1f;
     [Range(0.1f, 10)]
-    public float NucleusFlowSpeed = 5f;
+    public float NucleusFlowSpeed = 2f;
     [Range(0.001f, 1f)]
-    public float NucleusJitter = 0.05f;
+    public float NucleusJitter = 0.02f;
     [Range(0.1f, 1f)]
-    public float NucleusHoldShape = 0.5f;
+    public float NucleusHoldShape = 0.95f;
     [Range(0.001f, 1f)]
-    public float NucleusChangeSpeedOdds = 0.25f;
+    public float NucleusChangeSpeedOdds = 0.005f;
 
     public Transform ScaleTransform;
 
