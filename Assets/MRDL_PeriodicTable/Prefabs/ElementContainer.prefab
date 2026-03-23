@@ -2440,6 +2440,7 @@ GameObject:
   - component: {fileID: 2356920043342396677}
   - component: {fileID: 4047281383174676384}
   - component: {fileID: 6557432335797572209}
+  - component: {fileID: 77588872880541695}
   m_Layer: 8
   m_Name: Element
   m_TagString: Untagged
@@ -2791,9 +2792,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 34536166cc6a3db40be120662c490b70, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   isCloseButton: 1
+--- !u!114 &77588872880541695
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1836423756577020}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c055f6a9345c8ca4ca1b4c141fffb93e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1846409568605244
 GameObject:
   m_ObjectHideFlags: 0
