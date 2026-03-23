@@ -271,9 +271,10 @@ Shader "Mixed Reality Toolkit/Standard"
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
-            struct v2f 
+            struct v2f
             {
                 float4 position : SV_POSITION;
+                UNITY_VERTEX_OUTPUT_STEREO
 #if defined(_BORDER_LIGHT)
                 float4 uv : TEXCOORD0;
 #elif defined(_UV)
@@ -315,7 +316,6 @@ Shader "Mixed Reality Toolkit/Standard"
 #endif
 #endif
                 UNITY_VERTEX_INPUT_INSTANCE_ID
-                UNITY_VERTEX_OUTPUT_STEREO
             };
 
             UNITY_INSTANCING_BUFFER_START(Props)
@@ -755,9 +755,10 @@ Shader "Mixed Reality Toolkit/Standard"
                 return o;
             }
 
-            fixed4 frag(v2f i, fixed facing : VFACE) : SV_Target
+            fixed4 frag(v2f i, bool rawFacing : SV_IsFrontFace) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(i);
+                fixed facing = rawFacing ? 1.0 : -1.0;
 
 #if defined(_TRIPLANAR_MAPPING)
                 // Calculate triplanar uvs and apply texture scale and offset values like TRANSFORM_TEX.
